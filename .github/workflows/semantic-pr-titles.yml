@@ -50,3 +50,23 @@ jobs:
             end with a full-stop.
             For PRs that add or change ESLint-plugin rules, you should begin
             the title with "[rule-name] "
+
+      - name: Add bug label on "fix" PRs
+        if: ${{ github.event.pull_request.title.contains('fix') }}
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await octokit.issues.listLabelsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const bugLabel = response.data.find(label => label.name.toLowerCase() === 'bug');
+            if (bugLabel) {
+              await octokit.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: [bugLabel.name]
+              });
+            }
